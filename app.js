@@ -60,10 +60,83 @@
       ? bookmarks.filter((u) => u !== url)
       : [url, ...bookmarks];
     saveBookmarks();
+    if (auth && auth.isSignedIn()) auth.push(bookmarks);
     render();
 
     const btn = [...gridEl.querySelectorAll(".card-star")].find((b) => b.dataset.url === url);
     if (btn) btn.focus();
+  }
+
+  /* ---------- 계정 (선택 · auth.js) ---------- */
+
+  const auth = window.HUB_AUTH || null;
+  const accountEl = document.getElementById("account");
+
+  /* 로그인 직후: Drive 와 로컬 북마크를 합집합으로 병합하고 다시 올린다 */
+  async function syncOnSignIn() {
+    if (!auth) return;
+    try {
+      const remote = await auth.pull();
+      if (Array.isArray(remote)) {
+        const merged = bookmarks.slice();
+        for (const url of remote) {
+          if (typeof url === "string" && !merged.includes(url)) merged.push(url);
+        }
+        bookmarks = merged;
+        saveBookmarks();
+        render();
+      }
+      auth.push(bookmarks);
+    } catch (err) {
+      console.warn("[HUB] 북마크 동기화 실패:", err.message);
+    }
+  }
+
+  function renderAccount() {
+    if (!auth || !accountEl) return;
+
+    auth.onStatus((st) => {
+      accountEl.replaceChildren();
+      accountEl.hidden = !st.configured;
+      if (!st.configured) return;
+
+      if (!st.signedIn) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "account-btn";
+        btn.textContent = st.busy ? "로그인 중…" : "Google 로그인";
+        btn.disabled = st.busy;
+        btn.addEventListener("click", async () => {
+          const ok = await auth.signIn();
+          if (ok) await syncOnSignIn();
+        });
+        accountEl.append(btn);
+
+        if (st.error) {
+          const err = document.createElement("span");
+          err.className = "account-err";
+          err.textContent = st.error;
+          accountEl.append(err);
+        }
+        return;
+      }
+
+      const chip = document.createElement("div");
+      chip.className = "account-chip";
+
+      const name = document.createElement("span");
+      name.className = "account-name";
+      name.textContent = (st.user && st.user.name) || "로그인됨";
+
+      const out = document.createElement("button");
+      out.type = "button";
+      out.className = "account-out";
+      out.textContent = "로그아웃";
+      out.addEventListener("click", () => auth.signOut());
+
+      chip.append(name, out);
+      accountEl.append(chip);
+    });
   }
 
   /* ---------- 유틸 ---------- */
@@ -331,6 +404,7 @@
     }
   });
 
+  renderAccount();
   buildGroups();
   render();
 })();

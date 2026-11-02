@@ -109,6 +109,26 @@ GitHub Pages는 썸네일을 `cache-control: max-age=600`으로 캐시합니다.
 | `[THUMB] 경고: 닫지 못한 오버레이 N개` | 자동으로 닫지 못한 모달 → 해당 사이트 닫기 버튼을 스크립트 규칙에 추가 |
 | 첫 실행이 느림 | Render 무료 플랜 콜드 스타트(20초 안팎). 스크립트 타임아웃은 45초 |
 
+## Google 로그인 · 북마크 동기화 (선택)
+
+`auth.js`의 `CLIENT_ID`를 채우면 헤더에 로그인 버튼이 생기고, 북마크가 Google Drive의
+**앱 데이터 폴더**(`sitehub-bookmarks.json`)에 저장되어 기기 간에 동기화됩니다.
+비워두면 버튼이 나타나지 않고 북마크는 브라우저 localStorage에만 저장됩니다.
+
+1. Google Cloud Console → **API 및 서비스 → OAuth 동의 화면** 구성 (외부)
+2. **사용자 인증 정보 → OAuth 클라이언트 ID → 웹 애플리케이션**
+3. **승인된 JavaScript 원본**에 배포 주소의 원본을 추가 (경로 제외)
+   - `https://psb0118.github.io`
+   - 로컬 테스트용 `http://localhost:4173`
+4. 발급된 클라이언트 ID를 `auth.js`의 `CLIENT_ID`에 붙여넣기 (시크릿은 필요 없음)
+
+사용 범위는 `openid email profile https://www.googleapis.com/auth/drive.appdata` 입니다.
+앱 데이터 폴더는 사용자 Drive에 보이지 않는 숨김 영역이고 이 앱만 읽고 씁니다.
+액세스 토큰은 메모리에만 보관하며 서버로 보내지 않습니다.
+
+> 학교 Workspace 계정은 관리자 정책에 따라 외부 앱 OAuth가 차단될 수 있습니다.
+> `drive.appdata`는 민감 범위라 외부 사용자에게 공개할 때 Google 검증이 필요할 수 있습니다.
+
 ## 배포
 
 정적 호스팅이면 어디든 됩니다. 빌드 명령은 비워두고 루트(`/`)를 배포하면 됩니다.
