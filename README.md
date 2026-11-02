@@ -45,17 +45,69 @@ npm start
 
 ## 썸네일 다시 캡처
 
-사이트 화면이 바뀌었을 때만 필요합니다.
+사이트 화면이 바뀌었을 때만 필요합니다. `sites.js`에서 `image`가 지정된 사이트를 브라우저로 열어
+1280×720 PNG로 저장하며, **첫 방문 안내 모달(튜토리얼 등)은 자동으로 닫고** 캡처합니다.
+
+### 1. 준비 (한 번만)
 
 ```bash
-npm install
+npm install                        # puppeteer (devDependency)
 npx puppeteer browsers install chrome
-python3 -m http.server 4173    # 서버를 켜둔 상태에서
+```
+
+Linux에서 Chrome이 뜨지 않으면 아래 패키지가 필요합니다. (Ubuntu 24.04 기준)
+
+```bash
+sudo apt-get install -y \
+  libnspr4 libnss3 libatk1.0-0t64 libatk-bridge2.0-0t64 libatspi2.0-0t64 \
+  libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libxkbcommon0 libasound2t64 \
+  libxrender1 libxi6 libxext6 libcups2t64 libcairo2 libpango-1.0-0 \
+  libpangocairo-1.0-0 libpangoft2-1.0-0 libavahi-common3 libavahi-client3 \
+  libharfbuzz0b libfribidi0 libthai0 libdatrie1 libgraphite2-3 libpixman-1-0 \
+  libxcb-render0 libxcb-shm0 libpng16-16t64 libfreetype6 liblzo2-2 libxcb1 \
+  libdbus-1-3 libglib2.0-0t64
+```
+
+폰트도 필요합니다. 폰트가 없으면 한글은 □, 이모지는 빈 사각형으로 찍히고,
+폰트 설정 자체가 없으면 Chrome이 `SkFontMgr_FontConfigInterface ... Not implemented` 로 즉시 종료됩니다.
+
+```bash
+sudo apt-get install -y fontconfig fonts-nanum fonts-noto-color-emoji fonts-dejavu-core
+```
+
+### 2. 캡처
+
+```bash
 npm run thumbs
 ```
 
-`image`가 지정된 사이트를 1280×720 PNG로 `thumbs/`에 저장합니다.
-Linux에서는 Chrome 실행에 필요한 시스템 라이브러리와 한글 폰트가 필요합니다.
+- 결과는 `sites.js`의 `image` 경로에 그대로 덮어씁니다. (예: `thumbs/shooter.png`)
+- 화면을 덮는 고정 레이어(`z-index ≥ 100`)에서 닫기/건너뛰기 버튼만 눌러 모달을 닫습니다.
+  어떤 모달을 닫았는지는 `[THUMB]   모달 닫기: #tutorialModal ← "건너뛰기"` 처럼 로그로 나옵니다.
+- `python3 -m http.server` 같은 정적 서버는 필요 없습니다. `sites.js`의 URL이 모두 절대 주소라
+  `THUMB_BASE_URL`(기본값 `http://127.0.0.1:4173`)은 상대 경로를 쓸 때만 사용됩니다.
+
+### 3. 반영
+
+```bash
+git diff --stat thumbs/
+git add thumbs
+git commit -m "chore: 썸네일 갱신"
+git push
+```
+
+GitHub Pages는 썸네일을 `cache-control: max-age=600`으로 캐시합니다.
+배포 직후 예전 이미지가 보이면 10분 뒤에, 또는 `?v=2` 쿼리를 붙여 확인하세요.
+
+### 문제 해결
+
+| 증상 | 원인 / 해결 |
+|---|---|
+| `Code: 127 ... error while loading shared libraries: libXXX.so` | 위 시스템 라이브러리 누락 → 해당 패키지 설치 |
+| `SkFontMgr_FontConfigInterface.cpp ... Not implemented` | 폰트 설정 없음 → `fontconfig` + 폰트 설치 |
+| 한글이 □, 이모지가 빈 사각형 | `fonts-nanum`, `fonts-noto-color-emoji` 설치 |
+| `[THUMB] 경고: 닫지 못한 오버레이 N개` | 자동으로 닫지 못한 모달 → 해당 사이트 닫기 버튼을 스크립트 규칙에 추가 |
+| 첫 실행이 느림 | Render 무료 플랜 콜드 스타트(20초 안팎). 스크립트 타임아웃은 45초 |
 
 ## 배포
 
