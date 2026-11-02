@@ -42,7 +42,7 @@ window.HUB = {
     {
       name: "Neon Tetris",
       desc: "Firebase로 만든 네온 스타일 테트리스. Google Sites에서 바로 플레이합니다.",
-      url: "https://sites.google.com/changshin.ms.kr/neon-tetris-with-firebase/full-page-embed",
+      url: "https://sites.google.com/changshin.ms.kr/neon-tetris-with-firebase",
       icon: "🟪",
       image: "thumbs/neon-tetris.png",
       group: "게임",
@@ -52,7 +52,7 @@ window.HUB = {
     {
       name: "Mushroom",
       desc: "창신중학교 Google Sites에 올라온 버섯 테마 게임입니다.",
-      url: "https://sites.google.com/changshin.ms.kr/mushroom/full-page-embed?authuser=1",
+      url: "https://sites.google.com/changshin.ms.kr/mushroom",
       icon: "🍄",
       image: "thumbs/mushroom.png",
       group: "게임",
@@ -62,7 +62,7 @@ window.HUB = {
     {
       name: "Changshin",
       desc: "창신중학교 Google Sites 페이지입니다.",
-      url: "https://sites.google.com/changshin.ms.kr/changshin/full-page-embed",
+      url: "https://sites.google.com/changshin.ms.kr/changshin",
       icon: "🏫",
       image: "thumbs/changshin.png",
       group: "게임",
@@ -72,7 +72,7 @@ window.HUB = {
     {
       name: "1v1 Cyber Duel",
       desc: "Firebase 에디션 1대1 사이버 대결 게임입니다.",
-      url: "https://sites.google.com/changshin.ms.kr/1v1cyberduel-firebaseedition/full-page-embed",
+      url: "https://sites.google.com/changshin.ms.kr/1v1cyberduel-firebaseedition",
       icon: "⚔️",
       image: "thumbs/1v1-cyber-duel.png",
       group: "게임",
