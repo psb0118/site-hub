@@ -22,8 +22,8 @@
   if (cfg.subtitle) subEl.textContent = cfg.subtitle;
   document.title = cfg.title ? `${cfg.title} — 사이트 모음` : "사이트 허브";
 
-  const ALL = "전체";
-  let activeGroup = ALL;
+  /* 기본 활성 탭 = sites.js 에 처음 등장하는 그룹 */
+  let activeGroup = sites.length ? sites[0].group || "기타" : "";
   let query = "";
 
   /* ---------- 유틸 ---------- */
@@ -179,13 +179,13 @@
       const g = s.group || "기타";
       if (!names.includes(g)) names.push(g);
     }
-    return [ALL, ...names];
+    return names;
   }
 
   function buildGroups() {
     groupsEl.replaceChildren();
     for (const name of groupNames()) {
-      const count = name === ALL ? sites.length : sites.filter((s) => (s.group || "기타") === name).length;
+      const count = sites.filter((s) => (s.group || "기타") === name).length;
 
       const btn = document.createElement("button");
       btn.type = "button";
@@ -219,7 +219,7 @@
     const q = query.trim().toLowerCase();
 
     const visible = sites.filter((s) => {
-      const groupOk = activeGroup === ALL || (s.group || "기타") === activeGroup;
+      const groupOk = (s.group || "기타") === activeGroup;
       if (!groupOk) return false;
       if (!q) return true;
       const hay = [s.name, s.desc, (s.tags || []).join(" "), s.url].join(" ").toLowerCase();
@@ -237,9 +237,7 @@
       emptyEl.classList.toggle("hidden", visible.length > 0);
     }
 
-    countEl.textContent = q || activeGroup !== ALL
-      ? `${visible.length}개 표시 / 전체 ${sites.length}개`
-      : `사이트 ${sites.length}개`;
+    countEl.textContent = `${visible.length}개 표시 / 전체 ${sites.length}개`;
   }
 
   /* ---------- 이벤트 ---------- */

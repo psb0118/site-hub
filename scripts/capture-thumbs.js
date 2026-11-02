@@ -3,7 +3,7 @@
 /* =========================================================
    scripts/capture-thumbs.js — 허브 카드 썸네일 자동 캡처
    ---------------------------------------------------------
-   client/sites.js 에서 image 가 지정된 사이트를 브라우저로 열어
+   sites.js 에서 image 가 지정된 사이트를 브라우저로 열어
    1280x720 PNG 로 저장합니다.
 
    실행:
@@ -19,7 +19,7 @@ const vm = require("vm");
 const puppeteer = require("puppeteer");
 
 const ROOT = path.join(__dirname, "..");
-const CLIENT_DIR = path.join(ROOT, "client");
+const CLIENT_DIR = ROOT;
 const BASE_URL = process.env.THUMB_BASE_URL || "http://127.0.0.1:4173";
 const VIEWPORT = { width: 1280, height: 720, deviceScaleFactor: 1 };
 const SETTLE_MS = 1200;
@@ -34,7 +34,7 @@ function loadSites() {
 async function main() {
   const targets = loadSites().filter((s) => s && s.url && s.image);
   if (!targets.length) {
-    console.log("[THUMB] image 가 지정된 사이트가 없습니다. client/sites.js 를 확인하세요.");
+    console.log("[THUMB] image 가 지정된 사이트가 없습니다. sites.js 를 확인하세요.");
     return;
   }
 
