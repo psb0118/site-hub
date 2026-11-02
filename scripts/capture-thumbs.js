@@ -5,6 +5,7 @@
    ---------------------------------------------------------
    sites.js 에서 image 가 지정된 사이트를 브라우저로 열어
    1280x720 PNG 로 저장합니다.
+   화면을 덮는 첫 방문 안내 모달(튜토리얼 등)은 닫은 뒤 캡처합니다.
 
    실행:
      npm install                      # puppeteer 포함 devDependency
@@ -31,6 +32,86 @@ function loadSites() {
   return (sandbox.window.HUB && sandbox.window.HUB.sites) || [];
 }
 
+/* ---------- 오버레이(첫 방문 모달) 닫기 ---------- */
+/* 화면을 덮는 고정 레이어에서 닫기/건너뛰기 버튼만 눌러 썸네일이 모달로 가려지지 않게 한다. */
+const DISMISS_TEXT = /^(✕|×|x|닫기|건너뛰기|skip|close|got\s*it|확인|시작하기)$/i;
+const OVERLAY_SELECTOR =
+  'dialog,[role="dialog"],[aria-modal="true"],[class*="modal" i],[class*="overlay" i],[class*="popup" i]';
+
+async function dismissOverlays(page) {
+  for (let round = 0; round < 3; round += 1) {
+    const found = await page.evaluate(
+      ({ selector, pattern }) => {
+        const re = new RegExp(pattern, "i");
+        const visible = (el) => {
+          const r = el.getBoundingClientRect();
+          const s = getComputedStyle(el);
+          return (
+            r.width > 60 &&
+            r.height > 40 &&
+            s.display !== "none" &&
+            s.visibility !== "hidden" &&
+            Number(s.opacity) > 0.05
+          );
+        };
+        const overlays = [...document.querySelectorAll(selector)].filter((el) => {
+          const s = getComputedStyle(el);
+          return (
+            visible(el) &&
+            (s.position === "fixed" || s.position === "absolute") &&
+            Number(s.zIndex) >= 100
+          );
+        });
+        if (!overlays.length) return { overlays: 0, acted: false };
+
+        for (const root of overlays) {
+          const controls = [...root.querySelectorAll('button,[role="button"],a')].filter(visible);
+          const pick =
+            controls.find((el) => /close/i.test(String(el.className))) ||
+            controls.find((el) => /닫기|close/i.test(el.getAttribute("aria-label") || "")) ||
+            controls.find((el) => re.test((el.innerText || el.textContent || "").trim()));
+          if (!pick) continue;
+
+          const label = (pick.innerText || pick.textContent || "").trim();
+          const target = root.id ? `#${root.id}` : `.${String(root.className).split(" ")[0]}`;
+          pick.click();
+          return { overlays: overlays.length, acted: true, target, label };
+        }
+        return { overlays: overlays.length, acted: false };
+      },
+      { selector: OVERLAY_SELECTOR, pattern: DISMISS_TEXT.source }
+    );
+
+    if (found.overlays === 0) return;
+    if (found.acted) {
+      console.log(`[THUMB]   모달 닫기: ${found.target} ← "${found.label}"`);
+      await new Promise((r) => setTimeout(r, 700));
+      continue;
+    }
+
+    await page.keyboard.press("Escape");
+    await new Promise((r) => setTimeout(r, 500));
+  }
+
+  const left = await page.evaluate((selector) => {
+    const visible = (el) => {
+      const r = el.getBoundingClientRect();
+      const s = getComputedStyle(el);
+      return (
+        r.width > 60 &&
+        r.height > 40 &&
+        s.display !== "none" &&
+        s.visibility !== "hidden" &&
+        (s.position === "fixed" || s.position === "absolute") &&
+        Number(s.zIndex) >= 100
+      );
+    };
+    return [...document.querySelectorAll(selector)].filter(visible).length;
+  }, OVERLAY_SELECTOR);
+
+  if (left > 0) console.log(`[THUMB]   경고: 닫지 못한 오버레이 ${left}개 (그대로 캡처)`);
+}
+
 async function main() {
   const targets = loadSites().filter((s) => s && s.url && s.image);
   if (!targets.length) {
@@ -53,6 +134,9 @@ async function main() {
         await page.setViewport(VIEWPORT);
         await page.goto(url, { waitUntil: "networkidle2", timeout: 45000 });
         await new Promise((r) => setTimeout(r, SETTLE_MS));
+
+        await dismissOverlays(page);
+        await new Promise((r) => setTimeout(r, 400));
 
         fs.mkdirSync(path.dirname(outPath), { recursive: true });
         await page.screenshot({ path: outPath, type: "png" });
