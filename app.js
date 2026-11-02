@@ -26,6 +26,46 @@
   let activeGroup = sites.length ? sites[0].group || "기타" : "";
   let query = "";
 
+  /* ---------- 북마크 (개인 설정 · localStorage) ---------- */
+
+  /* 브라우저에만 저장됩니다. 서버·계정과 무관하게 이 기기에서만 유지됩니다. */
+  const BOOKMARK_KEY = "sitehub.bookmarks.v1";
+
+  function loadBookmarks() {
+    try {
+      const raw = localStorage.getItem(BOOKMARK_KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list.filter((u) => typeof u === "string") : [];
+    } catch {
+      return [];
+    }
+  }
+
+  let bookmarks = loadBookmarks();
+
+  function isBookmarked(url) {
+    return bookmarks.includes(url);
+  }
+
+  function saveBookmarks() {
+    try {
+      localStorage.setItem(BOOKMARK_KEY, JSON.stringify(bookmarks));
+    } catch {
+      /* 저장 불가(시크릿 모드 등) — 이번 세션에서만 유지 */
+    }
+  }
+
+  function toggleBookmark(url) {
+    bookmarks = isBookmarked(url)
+      ? bookmarks.filter((u) => u !== url)
+      : [url, ...bookmarks];
+    saveBookmarks();
+    render();
+
+    const btn = [...gridEl.querySelectorAll(".card-star")].find((b) => b.dataset.url === url);
+    if (btn) btn.focus();
+  }
+
   /* ---------- 유틸 ---------- */
 
   function isExternal(url) {
@@ -168,7 +208,30 @@
 
     body.append(top, desc, foot);
     card.append(buildThumb(site), body);
-    return card;
+
+    /* 북마크 별 — 카드(<a>) 안에 버튼을 중첩할 수 없어 형제로 둔다 */
+    const wrap = document.createElement("div");
+    wrap.className = "card-wrap" + (isBookmarked(site.url) ? " is-pinned" : "");
+
+    const star = document.createElement("button");
+    star.type = "button";
+    star.className = "card-star" + (isBookmarked(site.url) ? " active" : "");
+    star.dataset.url = site.url;
+    star.textContent = isBookmarked(site.url) ? "★" : "☆";
+    star.setAttribute("aria-pressed", String(isBookmarked(site.url)));
+    star.setAttribute(
+      "aria-label",
+      `${site.name} 북마크 ${isBookmarked(site.url) ? "해제" : "추가"}`
+    );
+    star.title = isBookmarked(site.url) ? "북마크 해제" : "북마크 (맨 위에 고정)";
+    star.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleBookmark(site.url);
+    });
+
+    wrap.append(card, star);
+    return wrap;
   }
 
   /* ---------- 카테고리 칩 ---------- */
@@ -226,8 +289,13 @@
       return hay.includes(q);
     });
 
+    /* 북마크한 사이트를 맨 앞으로 (같은 그룹 안에서는 기존 순서 유지) */
+    const ordered = visible
+      .slice()
+      .sort((a, b) => Number(isBookmarked(b.url)) - Number(isBookmarked(a.url)));
+
     gridEl.replaceChildren();
-    for (const site of visible) gridEl.append(buildCard(site));
+    for (const site of ordered) gridEl.append(buildCard(site));
 
     if (sites.length === 0) {
       emptyEl.textContent = "아직 등록된 사이트가 없습니다. client/sites.js 에 사이트를 추가하세요.";
