@@ -1,0 +1,13 @@
+{
+  "name": "site-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "여러 사이트를 모아둔 정적 링크 허브",
+  "scripts": {
+    "start": "npx --yes serve . -l 4173",
+    "thumbs": "node scripts/capture-thumbs.js"
+  },
+  "devDependencies": {
+    "puppeteer": "^25.10.0"
+  }
+}
