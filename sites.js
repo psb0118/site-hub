@@ -120,6 +120,16 @@ window.HUB = {
       accent: "#34d399",
     },
     {
+      name: "Neon Space Shooter",
+      desc: "네온 스타일 우주 슈팅 게임입니다. Google 로그인 후 점수를 저장할 수 있습니다.",
+      url: "https://sites.google.com/changshin.ms.kr/neon-space-shooter",
+      icon: "🚀",
+      image: "thumbs/neon-space-shooter.png",
+      group: "게임",
+      tags: ["네온", "우주", "슈터", "Neon Shooter"],
+      accent: "#7dd3fc",
+    },
+    {
       name: "GitHub — shooter",
       desc: "게임과 허브의 소스 코드, 커밋 기록을 확인합니다.",
       url: "https://github.com/psb0118/shooter",
