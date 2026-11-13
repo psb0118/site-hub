@@ -40,16 +40,6 @@ window.HUB = {
       accent: "#5fd18a",
     },
     {
-      name: "Neon Tetris",
-      desc: "Firebase로 만든 네온 스타일 테트리스. Google Sites에서 바로 플레이합니다.",
-      url: "https://sites.google.com/changshin.ms.kr/neon-tetris-with-firebase",
-      icon: "🟪",
-      image: "thumbs/neon-tetris.png",
-      group: "게임",
-      tags: ["테트리스", "Tetris", "Firebase", "퍼즐"],
-      accent: "#a855f7",
-    },
-    {
       name: "Mushroom",
       desc: "창신중학교 Google Sites에 올라온 버섯 테마 게임입니다.",
       url: "https://sites.google.com/changshin.ms.kr/mushroom",
