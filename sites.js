@@ -91,7 +91,7 @@ window.HUB = {
     },
     {
       name: "Pigeon Timing Flight Game",
-      desc: "창신중학교 Google Sites에 올라온 비둘기 비행 게임입니다.",
+      desc: "스페이스바나 화면을 클릭해 날개를 쳐서 타이밍에 맞춰 부스터를 발동하는 비행 게임입니다.",
       url: "https://sites.google.com/changshin.ms.kr/pigeon-timing-flight-game",
       icon: "🕊️",
       image: "thumbs/pigeon-timing-flight-game.png",
