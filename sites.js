@@ -60,16 +60,6 @@ window.HUB = {
       accent: "#ef6b6b",
     },
     {
-      name: "Changshin",
-      desc: "창신중학교 Google Sites 페이지입니다.",
-      url: "https://sites.google.com/changshin.ms.kr/changshin",
-      icon: "🏫",
-      image: "thumbs/changshin.png",
-      group: "게임",
-      tags: ["창신", "Changshin", "학교"],
-      accent: "#f5b942",
-    },
-    {
       name: "1v1 Cyber Duel",
       desc: "Firebase 에디션 1대1 사이버 대결 게임입니다.",
       url: "https://sites.google.com/changshin.ms.kr/1v1cyberduel-firebaseedition",
