@@ -80,6 +80,16 @@ window.HUB = {
       accent: "#4ad9d9",
     },
     {
+      name: "113",
+      desc: "창신중학교 Google Sites 페이지입니다.",
+      url: "https://sites.google.com/changshin.ms.kr/113",
+      icon: "🌐",
+      image: "thumbs/113.png",
+      group: "게임",
+      tags: ["113", "창신", "Google Sites"],
+      accent: "#7c9cff",
+    },
+    {
       name: "GitHub — shooter",
       desc: "게임과 허브의 소스 코드, 커밋 기록을 확인합니다.",
       url: "https://github.com/psb0118/shooter",
