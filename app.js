@@ -240,7 +240,9 @@
       const img = document.createElement("img");
       img.className = "thumb-img";
       img.src = site.image;
-      img.alt = `${site.name} 미리보기`;
+      /* 카드 제목이 이미 사이트를 설명하므로 썸네일은 장식으로 둔다 */
+      img.alt = "";
+      img.setAttribute("aria-hidden", "true");
       img.loading = "lazy";
       img.decoding = "async";
       img.width = 1280;
@@ -281,11 +283,8 @@
     card.style.setProperty("--accent", accent);
     card.style.setProperty("--accent-soft", withAlpha(accent, 0.22));
     card.style.setProperty("--accent-faint", withAlpha(accent, 0.1));
-    card.setAttribute(
-      "aria-label",
-      `${site.name}${site.desc ? " — " + site.desc : ""}${external ? " (새 탭에서 열림)" : ""}`
-    );
-
+    /* 접근 이름은 aria-label 로 덮지 않는다 — 화면에 보이는 텍스트(제목·설명·태그)와
+       어긋나면 WCAG 2.5.3(Label in Name) 위반이 된다. */
     if (external) {
       card.target = "_blank";
       card.rel = "noopener noreferrer";
@@ -321,8 +320,8 @@
     healthDot.className = "card-health";
     healthDot.dataset.state = "unknown";
     healthDot.hidden = true;
-    healthDot.setAttribute("role", "img");
-    healthDot.setAttribute("aria-label", "링크 점검 상태");
+    /* 점은 시각 표시용 — 응답 없음은 카드 본문 안내 문구로 전달된다 */
+    healthDot.setAttribute("aria-hidden", "true");
 
     top.append(icon, title, healthDot);
 
@@ -351,6 +350,7 @@
 
     const go = document.createElement("span");
     go.className = "card-go";
+    go.setAttribute("aria-hidden", "true");
     go.innerHTML = external
       ? '새 탭 <span class="card-ext">외부</span> ↗'
       : "이동 →";
@@ -358,6 +358,14 @@
     foot.append(tags, go);
 
     body.append(top, desc, note, foot);
+
+    /* 새 탭 안내도 본문 텍스트로 넣어 접근 이름에 포함시킨다 */
+    if (external) {
+      const hint = document.createElement("span");
+      hint.className = "visually-hidden";
+      hint.textContent = " (새 탭에서 열림)";
+      body.append(hint);
+    }
     card.append(buildThumb(site), body);
 
     /* 북마크 별 — 카드(<a>) 안에 버튼을 중첩할 수 없어 형제로 둔다 */
@@ -552,7 +560,6 @@
       dot.hidden = false;
       dot.dataset.state = st.state;
       dot.title = healthText(st);
-      dot.setAttribute("aria-label", `링크 상태: ${healthText(st)}`);
 
       /* 5xx · 연결 실패 → 슬립 가능성 안내 */
       const sleeping = st.state === "bad" || /^5\d\d/.test(String(st.status || ""));
