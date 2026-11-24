@@ -1,0 +1,89 @@
+{
+  "checkedAt": "2026-11-24T23:31:41.188Z",
+  "sites": {
+    "https://shooter-mfal.onrender.com/": {
+      "state": "ok",
+      "status": 200,
+      "label": "200",
+      "thumb": "ok",
+      "thumbDetail": "1280×720 · 42KB +640px"
+    },
+    "https://wordgame-kol6.onrender.com/": {
+      "state": "ok",
+      "status": 200,
+      "label": "200",
+      "thumb": "ok",
+      "thumbDetail": "1280×720 · 40KB +640px"
+    },
+    "https://silence-g1fe.onrender.com/": {
+      "state": "ok",
+      "status": 200,
+      "label": "200",
+      "thumb": "ok",
+      "thumbDetail": "1280×720 · 46KB +640px"
+    },
+    "https://psb0118.github.io/stock-market/": {
+      "state": "ok",
+      "status": 200,
+      "label": "200",
+      "thumb": "ok",
+      "thumbDetail": "1280×720 · 39KB +640px"
+    },
+    "https://sites.google.com/changshin.ms.kr/mushroom": {
+      "state": "ok",
+      "status": 200,
+      "label": "200",
+      "thumb": "ok",
+      "thumbDetail": "1280×720 · 42KB +640px"
+    },
+    "https://sites.google.com/changshin.ms.kr/1v1cyberduel-firebaseedition": {
+      "state": "ok",
+      "status": 200,
+      "label": "200",
+      "thumb": "ok",
+      "thumbDetail": "1280×720 · 24KB +640px"
+    },
+    "https://sites.google.com/changshin.ms.kr/113": {
+      "state": "ok",
+      "status": 200,
+      "label": "200",
+      "thumb": "ok",
+      "thumbDetail": "1280×720 · 40KB +640px"
+    },
+    "https://sites.google.com/changshin.ms.kr/yoo": {
+      "state": "ok",
+      "status": 200,
+      "label": "200",
+      "thumb": "ok",
+      "thumbDetail": "1280×720 · 23KB +640px"
+    },
+    "https://sites.google.com/changshin.ms.kr/pigeon-timing-flight-game": {
+      "state": "ok",
+      "status": 200,
+      "label": "200",
+      "thumb": "ok",
+      "thumbDetail": "1280×720 · 40KB +640px"
+    },
+    "https://sites.google.com/changshin.ms.kr/changshin-is-goat": {
+      "state": "ok",
+      "status": 200,
+      "label": "200",
+      "thumb": "ok",
+      "thumbDetail": "1280×720 · 17KB +640px"
+    },
+    "https://sites.google.com/changshin.ms.kr/neon-space-shooter": {
+      "state": "ok",
+      "status": 200,
+      "label": "200",
+      "thumb": "ok",
+      "thumbDetail": "1280×720 · 21KB +640px"
+    },
+    "https://github.com/psb0118/shooter": {
+      "state": "ok",
+      "status": 200,
+      "label": "200",
+      "thumb": "ok",
+      "thumbDetail": "1280×720 · 64KB +640px"
+    }
+  }
+}

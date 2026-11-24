@@ -4,7 +4,7 @@
    scripts/capture-thumbs.js — 허브 카드 썸네일 자동 캡처
    ---------------------------------------------------------
    sites.js 에서 image 가 지정된 사이트를 브라우저로 열어
-   1280x720 PNG 로 저장합니다.
+   1280×720 WebP 와 640px 사본(-640.webp)을 저장합니다.
    화면을 덮는 첫 방문 안내 모달(튜토리얼 등)은 닫은 뒤 캡처합니다.
 
    실행:
@@ -33,6 +33,30 @@ function loadSites() {
   const sandbox = { window: {} };
   vm.runInNewContext(fs.readFileSync(file, "utf8"), sandbox, { filename: file });
   return (sandbox.window.HUB && sandbox.window.HUB.sites) || [];
+}
+
+/* PNG 버퍼 → WebP (width 미지정 시 원본 크기) */
+async function toWebp(browser, png, width) {
+  const page = await browser.newPage();
+  try {
+    const data = await page.evaluate(
+      async ({ b64, width }) => {
+        const img = new Image();
+        img.src = "data:image/png;base64," + b64;
+        await img.decode();
+        const w = width || img.naturalWidth;
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = Math.round((img.naturalHeight / img.naturalWidth) * w);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL("image/webp", 0.86).split(",")[1];
+      },
+      { b64: Buffer.from(png).toString("base64"), width }
+    );
+    return Buffer.from(data, "base64");
+  } finally {
+    await page.close();
+  }
 }
 
 /* ---------- 오버레이(첫 방문 모달) 닫기 ---------- */
@@ -157,10 +181,25 @@ async function main() {
         await new Promise((r) => setTimeout(r, 400));
 
         fs.mkdirSync(path.dirname(outPath), { recursive: true });
-        await page.screenshot({ path: outPath, type: "png" });
+        const png = await page.screenshot({ type: "png" });
 
-        const size = Math.round(fs.statSync(outPath).size / 1024);
-        console.log(`[THUMB] ${site.name} → ${path.relative(ROOT, outPath)} (${size}KB) ${url}`);
+        const big = await toWebp(browser, png, null);
+        fs.writeFileSync(outPath, big);
+        const size = Math.round(big.length / 1024);
+
+        let extra = "";
+        if (/\.webp$/i.test(outPath)) {
+          const compactPath = outPath.replace(/\.webp$/i, "-640.webp");
+          const compact = await toWebp(browser, png, 640);
+          fs.writeFileSync(compactPath, compact);
+          extra = ` + ${path.relative(ROOT, compactPath)} (${Math.round(compact.length / 1024)}KB)`;
+        } else {
+          extra = " (image 경로가 .webp 가 아니어서 640 사본을 만들지 않았습니다)";
+        }
+
+        console.log(
+          `[THUMB] ${site.name} → ${path.relative(ROOT, outPath)} (${size}KB)${extra} ${url}`
+        );
       } finally {
         await page.close();
       }

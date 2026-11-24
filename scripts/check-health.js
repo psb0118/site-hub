@@ -5,8 +5,9 @@
    ---------------------------------------------------------
    sites.js 의 모든 항목에 대해
      1) url 접속 상태 (리다이렉트 추적, 타임아웃)
-     2) image 썸네일 파일 존재 여부 · PNG 여부 · 해상도
-   를 확인하고 Markdown 리포트를 만듭니다.
+     2) image 썸네일 파일 존재 여부 · WebP 여부 · 해상도 · 640px 사본
+   를 확인하고 Markdown 리포트와 health.json 을 만듭니다.
+   health.json 은 허브 카드의 상태 점(정상/주의/응답 없음)에 쓰입니다.
 
    외부 의존성 없음 (Node 18+ 내장 fetch 사용).
 
@@ -30,6 +31,7 @@ const TIMEOUT_MS = Number(process.env.HEALTH_TIMEOUT_MS || 20000);
 const CONCURRENCY = Number(process.env.HEALTH_CONCURRENCY || 4);
 const STRICT_LINKS = process.env.STRICT_LINKS === "1";
 const REPORT_PATH = path.join(ROOT, "health-report.md");
+const HEALTH_PATH = path.join(ROOT, "health.json");
 const UA = "site-hub-health/1.0 (+https://github.com/psb0118/site-hub)";
 
 function loadSites() {
@@ -44,27 +46,61 @@ function loadSites() {
   return hub.sites;
 }
 
-function checkThumb(image) {
-  if (!image) return { state: "none", label: "기본 아이콘" };
-  const abs = path.resolve(ROOT, image);
-  if (!abs.startsWith(ROOT + path.sep)) return { state: "bad", label: "경로 이탈" };
+/* WebP 헤더에서 가로·세로 크기를 읽는다 (VP8 / VP8L / VP8X) */
+function readWebp(abs) {
   let buf;
   try {
     buf = fs.readFileSync(abs);
   } catch {
-    return { state: "bad", label: "파일 없음" };
+    return null;
   }
-  const isPng =
-    buf.length > 24 &&
-    buf.readUInt32BE(0) === 0x89504e47 &&
-    buf.readUInt32BE(4) === 0x0d0a1a0a &&
-    buf.slice(12, 16).toString("ascii") === "IHDR";
-  if (!isPng) return { state: "bad", label: `PNG 아님 (${buf.length}B)` };
-  const w = buf.readUInt32BE(16);
-  const h = buf.readUInt32BE(20);
-  const kb = Math.round(buf.length / 1024);
-  const small = w < 640 || h < 360;
-  return { state: small ? "warn" : "ok", label: `${w}×${h} · ${kb}KB` };
+  if (buf.length < 30) return { error: "파일이 너무 작음" };
+  if (buf.toString("ascii", 0, 4) !== "RIFF" || buf.toString("ascii", 8, 12) !== "WEBP") {
+    return { error: "WebP 아님" };
+  }
+  try {
+    const kind = buf.toString("ascii", 12, 16);
+    if (kind === "VP8X") {
+      return { w: buf.readUIntLE(24, 3) + 1, h: buf.readUIntLE(27, 3) + 1, bytes: buf.length };
+    }
+    if (kind === "VP8L") {
+      const v = buf.readUInt32LE(21);
+      return { w: (v & 0x3fff) + 1, h: ((v >> 14) & 0x3fff) + 1, bytes: buf.length };
+    }
+    if (kind === "VP8 ") {
+      return {
+        w: (buf.readUInt16LE(26) & 0x3fff) + 1,
+        h: (buf.readUInt16LE(28) & 0x3fff) + 1,
+        bytes: buf.length,
+      };
+    }
+    return { error: `알 수 없는 형식(${kind.trim() || "?"})` };
+  } catch {
+    return { error: "헤더 해석 실패" };
+  }
+}
+
+function checkThumb(image) {
+  if (!image) return { state: "none", label: "기본 아이콘" };
+  const abs = path.resolve(ROOT, image);
+  if (!abs.startsWith(ROOT + path.sep)) return { state: "bad", label: "경로 이탈" };
+
+  const info = readWebp(abs);
+  if (!info) return { state: "bad", label: "파일 없음" };
+  if (info.error) return { state: "bad", label: info.error };
+
+  const kb = Math.round(info.bytes / 1024);
+  const small = info.w < 640 || info.h < 360;
+
+  /* srcset 이 참조하는 640px 사본도 함께 확인 */
+  const compactPath = image.replace(/\.webp$/i, "-640.webp");
+  const compact = compactPath === image ? null : readWebp(path.resolve(ROOT, compactPath));
+  if (compactPath !== image && (!compact || compact.error)) {
+    return { state: "bad", label: `${info.w}×${info.h} · 640 사본 없음` };
+  }
+
+  const extra = compact && !compact.error ? ` +${compact.w}px` : "";
+  return { state: small ? "warn" : "ok", label: `${info.w}×${info.h} · ${kb}KB${extra}` };
 }
 
 async function checkLink(url) {
@@ -93,11 +129,11 @@ async function checkLink(url) {
     } else if (finalUrl.replace(/\/$/, "") !== url.replace(/\/$/, "")) {
       note = `→ ${finalUrl}`;
     }
-    return { state, label: [String(status), note].filter(Boolean).join(" "), ms };
+    return { state, status, label: [String(status), note].filter(Boolean).join(" "), ms };
   } catch (err) {
     const ms = Date.now() - started;
     const name = (err && (err.name || err.code)) || "Error";
-    return { state: "bad", label: `실패 (${name}, ${ms}ms)`, ms };
+    return { state: "bad", status: null, label: `실패 (${name}, ${ms}ms)`, ms };
   }
 }
 
@@ -156,7 +192,7 @@ async function main() {
   });
 
   const problems = results.filter(
-    (r) => r.link.state !== "ok" || r.thumb.state !== "ok" && r.thumb.state !== "none"
+    (r) => r.link.state !== "ok" || (r.thumb.state !== "ok" && r.thumb.state !== "none")
   );
   lines.push("");
   if (!problems.length) {
@@ -177,6 +213,19 @@ async function main() {
   const report = lines.join("\n");
   fs.writeFileSync(REPORT_PATH, report, "utf8");
   process.stdout.write(report + "\n");
+
+  /* 허브 카드의 상태 점이 읽는 데이터 */
+  const health = { checkedAt: now.toISOString(), sites: {} };
+  for (const r of results) {
+    health.sites[r.site.url] = {
+      state: r.link.state,
+      status: r.link.status,
+      label: r.link.label,
+      thumb: r.thumb.state,
+      thumbDetail: r.thumb.label,
+    };
+  }
+  fs.writeFileSync(HEALTH_PATH, JSON.stringify(health, null, 2) + "\n", "utf8");
 
   if (process.env.GITHUB_STEP_SUMMARY) {
     fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, report + "\n");
@@ -205,7 +254,7 @@ async function main() {
     `\n요약: 링크 정상 ${linkOk}/${sites.length}, 썸네일 정상 ${thumbOk}/${sites.length}` +
       (thumbBroken ? " · 썸네일 문제로 실패" : "") +
       (STRICT_LINKS && linkBroken ? " · 링크 문제로 실패(STRICT_LINKS)" : "") +
-      "\n"
+      `\nhealth.json 갱신: ${path.relative(ROOT, HEALTH_PATH)}\n`
   );
 }
 

@@ -70,6 +70,32 @@
     if (btn) btn.focus();
   }
 
+  /* ---------- 방문 기록 (자주 · 최근 연 카드 우선) ---------- */
+
+  const VISIT_KEY = "sitehub.visits.v1";
+
+  function loadVisits() {
+    try {
+      const raw = localStorage.getItem(VISIT_KEY);
+      const data = raw ? JSON.parse(raw) : {};
+      return data && typeof data === "object" ? data : {};
+    } catch {
+      return {};
+    }
+  }
+
+  let visits = loadVisits();
+
+  function recordVisit(url) {
+    const prev = visits[url] || { n: 0, t: 0 };
+    visits[url] = { n: prev.n + 1, t: Date.now() };
+    try {
+      localStorage.setItem(VISIT_KEY, JSON.stringify(visits));
+    } catch {
+      /* 저장 불가(시크릿 모드 등) — 이번 세션에서만 유지 */
+    }
+  }
+
   /* ---------- 계정 (선택 · auth.js) ---------- */
 
   const auth = window.HUB_AUTH || null;
@@ -161,6 +187,26 @@
     }
   }
 
+  /* 검색용 정규화: 공백 제거 + 소문자 ("끝말 잇기" → "끝말잇기") */
+  function normalize(text) {
+    return String(text || "").toLowerCase().replace(/\s+/g, "");
+  }
+
+  /* 한글 초성 추출: "침묵의 숲" → "ㅊㅁㅇㅅ" */
+  const CHO = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
+
+  function choseong(text) {
+    let out = "";
+    for (const ch of String(text || "")) {
+      const code = ch.charCodeAt(0);
+      out +=
+        code >= 0xac00 && code <= 0xd7a3
+          ? CHO[Math.floor((code - 0xac00) / 588)]
+          : ch;
+    }
+    return out;
+  }
+
   /* hex 색상 → 투명도 포함 색상 (강조색 배경/테두리용) */
   function withAlpha(hex, alpha) {
     const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(hex || ""));
@@ -197,6 +243,15 @@
       img.alt = `${site.name} 미리보기`;
       img.loading = "lazy";
       img.decoding = "async";
+      img.width = 1280;
+      img.height = 720;
+
+      /* WebP 는 640px 사본을 함께 두고 화면 폭에 따라 골라 받는다 */
+      const small = site.image.replace(/\.webp$/i, "-640.webp");
+      if (small !== site.image) {
+        img.srcset = `${small} 640w, ${site.image} 1280w`;
+        img.sizes = "(max-width: 720px) 92vw, 360px";
+      }
 
       const show = () => thumb.classList.add("has-image");
       const hide = () => {
@@ -221,6 +276,8 @@
     const card = document.createElement("a");
     card.className = "site-card";
     card.href = site.url;
+    card.dataset.url = site.url;
+    card.addEventListener("click", () => recordVisit(site.url));
     card.style.setProperty("--accent", accent);
     card.style.setProperty("--accent-soft", withAlpha(accent, 0.22));
     card.style.setProperty("--accent-faint", withAlpha(accent, 0.1));
@@ -258,12 +315,26 @@
     host.textContent = hostOf(site.url);
 
     title.append(name, host);
-    top.append(icon, title);
+
+    /* 링크 점검 상태 점 — health.json 을 받아오면 표시된다 */
+    const healthDot = document.createElement("span");
+    healthDot.className = "card-health";
+    healthDot.dataset.state = "unknown";
+    healthDot.hidden = true;
+    healthDot.setAttribute("role", "img");
+    healthDot.setAttribute("aria-label", "링크 점검 상태");
+
+    top.append(icon, title, healthDot);
 
     /* 설명 */
     const desc = document.createElement("p");
     desc.className = "card-desc";
     desc.textContent = site.desc || "";
+
+    /* 응답이 없을 때만 보이는 안내 (Render 무료 플랜 콜드 스타트) */
+    const note = document.createElement("p");
+    note.className = "card-note";
+    note.hidden = true;
 
     /* 하단: 태그 + 이동 표시 */
     const foot = document.createElement("div");
@@ -286,7 +357,7 @@
 
     foot.append(tags, go);
 
-    body.append(top, desc, foot);
+    body.append(top, desc, note, foot);
     card.append(buildThumb(site), body);
 
     /* 북마크 별 — 카드(<a>) 안에 버튼을 중첩할 수 없어 형제로 둔다 */
@@ -399,7 +470,7 @@
   }
 
   function render() {
-    const q = query.trim().toLowerCase();
+    const q = normalize(query);
 
     /* 북마크 탭에 있는데 북마크가 모두 사라졌으면 기본 탭으로 복귀 */
     if (activeGroup === BOOKMARK_GROUP && !bookmarks.length) {
@@ -410,21 +481,31 @@
     const visible = sites.filter((s) => {
       /* 검색어가 있으면 탭과 무관하게 전체 사이트에서 찾는다 */
       if (q) {
-        const hay = [s.name, s.desc, (s.tags || []).join(" "), s.url].join(" ").toLowerCase();
-        return hay.includes(q);
+        const hay = normalize([s.name, s.desc, (s.tags || []).join(" "), s.url].join(" "));
+        if (hay.includes(q)) return true;
+        /* 초성 검색: "ㅊㅁ" → 침묵의 숲 */
+        return (
+          /^[ㄱ-ㅎ]+$/.test(q) &&
+          normalize(choseong([s.name, (s.tags || []).join(" ")].join(" "))).includes(q)
+        );
       }
       if (activeGroup === BOOKMARK_GROUP) return isBookmarked(s.url);
       return (s.group || "기타") === activeGroup;
     });
 
-    /* 상단 고정(pin) → 북마크 → 나머지 (같은 순위 안에서는 기존 순서 유지) */
-    const ordered = visible
-      .slice()
-      .sort(
-        (a, b) =>
-          Number(!a.pin) - Number(!b.pin) ||
-          Number(isBookmarked(b.url)) - Number(isBookmarked(a.url))
-      );
+    /* 상단 고정(pin) → 북마크 → 자주·최근 연 순 (같은 순위는 기존 순서 유지) */
+    const ordered = visible.slice().sort((a, b) => {
+      const pin = Number(!a.pin) - Number(!b.pin);
+      if (pin) return pin;
+
+      const book = Number(isBookmarked(b.url)) - Number(isBookmarked(a.url));
+      if (book) return book;
+
+      const va = visits[a.url] || { n: 0, t: 0 };
+      const vb = visits[b.url] || { n: 0, t: 0 };
+      if (va.n !== vb.n) return vb.n - va.n;
+      return vb.t - va.t;
+    });
 
     gridEl.replaceChildren();
     for (const site of ordered) gridEl.append(buildCard(site));
@@ -446,6 +527,56 @@
       : `${visible.length}개 표시 / 전체 ${sites.length}개`;
 
     markActiveChips();
+    applyHealth();
+  }
+
+  /* ---------- 점검 상태 (health.json · CI 가 주기적으로 갱신) ---------- */
+
+  let health = {};
+  let healthAt = "";
+
+  function healthText(st) {
+    if (!st) return "점검 정보 없음";
+    const state = st.state === "ok" ? "정상" : st.state === "warn" ? "주의" : "응답 없음";
+    const when = healthAt ? ` · ${healthAt.slice(0, 16).replace("T", " ")} UTC 점검` : "";
+    return `${state} (${st.label || st.state})${when}`;
+  }
+
+  function applyHealth() {
+    for (const card of gridEl.querySelectorAll(".site-card")) {
+      const st = health[card.dataset.url];
+      const dot = card.querySelector(".card-health");
+      const note = card.querySelector(".card-note");
+      if (!st || !dot) continue;
+
+      dot.hidden = false;
+      dot.dataset.state = st.state;
+      dot.title = healthText(st);
+      dot.setAttribute("aria-label", `링크 상태: ${healthText(st)}`);
+
+      /* 5xx · 연결 실패 → 슬립 가능성 안내 */
+      const sleeping = st.state === "bad" || /^5\d\d/.test(String(st.status || ""));
+      if (note) {
+        note.hidden = !sleeping;
+        note.textContent = sleeping
+          ? "지금 응답이 없어요 · 첫 접속에 30초쯤 걸릴 수 있습니다"
+          : "";
+      }
+    }
+  }
+
+  async function loadHealth() {
+    try {
+      const res = await fetch(`health.json?v=${Date.now()}`, { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data || typeof data !== "object" || !data.sites) return;
+      health = data.sites;
+      healthAt = data.checkedAt || "";
+      applyHealth();
+    } catch {
+      /* file:// · 오프라인 — 상태 표시 없이 그대로 동작 */
+    }
   }
 
   /* ---------- 이벤트 ---------- */
@@ -482,8 +613,37 @@
     }
   });
 
+  /* 카드 사이 키보드 이동 (← → ↑ ↓ · Home · End) */
+  gridEl.addEventListener("keydown", (e) => {
+    const moves = ["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Home", "End"];
+    if (!moves.includes(e.key)) return;
+
+    const cards = [...gridEl.querySelectorAll(".site-card")];
+    const current = cards.indexOf(document.activeElement);
+    if (current < 0) return;
+
+    const columns = Math.max(
+      1,
+      getComputedStyle(gridEl).gridTemplateColumns.split(" ").filter(Boolean).length
+    );
+
+    let next = current;
+    if (e.key === "ArrowRight") next = Math.min(cards.length - 1, current + 1);
+    else if (e.key === "ArrowLeft") next = Math.max(0, current - 1);
+    else if (e.key === "ArrowDown") next = Math.min(cards.length - 1, current + columns);
+    else if (e.key === "ArrowUp") next = Math.max(0, current - columns);
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = cards.length - 1;
+
+    if (next !== current && cards[next]) {
+      e.preventDefault();
+      cards[next].focus();
+    }
+  });
+
   readUrlState();
   renderAccount();
   buildGroups();
   render();
+  loadHealth();
 })();

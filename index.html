@@ -7,10 +7,32 @@
   <meta name="description" content="여러 사이트를 한곳에서 이동할 수 있는 링크 허브" />
   <meta name="theme-color" content="#070a10" />
   <title>사이트 허브</title>
+
+  <!-- 공유 미리보기 -->
+  <link rel="canonical" href="https://psb0118.github.io/site-hub/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="SITE HUB" />
+  <meta property="og:title" content="SITE HUB — 사이트 모음" />
+  <meta property="og:description" content="여러 사이트를 카드로 모아둔 링크 허브. 검색·카테고리·북마크로 바로 이동합니다." />
+  <meta property="og:url" content="https://psb0118.github.io/site-hub/" />
+  <meta property="og:image" content="https://psb0118.github.io/site-hub/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="SITE HUB — 사이트 모음" />
+  <meta name="twitter:description" content="여러 사이트를 카드로 모아둔 링크 허브" />
+  <meta name="twitter:image" content="https://psb0118.github.io/site-hub/og.png" />
+
+  <!-- 홈화면 추가(PWA) -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='9' y='9' width='14' height='14' rx='3' transform='rotate(45 16 16)' fill='%234a7cff'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <a class="skip-link" href="#site-grid">사이트 목록으로 건너뛰기</a>
   <noscript>
     <p class="noscript">이 페이지는 JavaScript 가 필요합니다. 브라우저 설정에서 JavaScript 를 켠 뒤 새로고침해 주세요.</p>
   </noscript>
@@ -32,9 +54,10 @@
             <circle cx="11" cy="11" r="7" />
             <path d="M16.6 16.6 21 21" />
           </svg>
-          <input id="search" type="search" placeholder="사이트 검색…" autocomplete="off" aria-label="사이트 검색" />
+          <input id="search" type="search" placeholder="사이트 검색… (초성 가능)" autocomplete="off" aria-label="사이트 검색" aria-describedby="search-hint" />
           <kbd class="search-kbd">/</kbd>
         </div>
+        <p id="search-hint" class="visually-hidden">초성으로도 찾을 수 있습니다. 예: ㅊㅁ → 침묵의 숲</p>
         <div id="account" class="account" hidden></div>
       </div>
     </header>
@@ -42,7 +65,7 @@
     <nav id="groups" class="groups" aria-label="카테고리"></nav>
 
     <main class="hub-main">
-      <div id="site-grid" class="site-grid"></div>
+      <div id="site-grid" class="site-grid" tabindex="-1"></div>
       <p id="empty" class="empty hidden">조건에 맞는 사이트가 없습니다.</p>
     </main>
 
@@ -54,5 +77,13 @@
   <script src="sites.js"></script>
   <script src="auth.js"></script>
   <script src="app.js"></script>
+  <script>
+    /* 오프라인 셸 — 네트워크 우선, 실패 시 캐시 사용 */
+    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("sw.js").catch(function () {});
+      });
+    }
+  </script>
 </body>
 </html>
