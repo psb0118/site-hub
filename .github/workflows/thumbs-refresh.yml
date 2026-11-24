@@ -1,0 +1,58 @@
+name: 썸네일 자동 갱신
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 매주 화요일 03:00 KST (월요일 18:00 UTC)
+    - cron: "0 18 * * 1"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: thumbs-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: 썸네일 재캡처 (1280 WebP + 640 사본)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: 저장소 받기
+        uses: actions/checkout@v4
+
+      - name: Node 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Chrome 실행에 필요한 라이브러리 · 폰트
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            fonts-nanum fonts-noto-color-emoji fonts-dejavu-core fontconfig \
+            libnss3 libnspr4 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 \
+            libxkbcommon0 libasound2t64 libcairo2 libpango-1.0-0 libxcomposite1 \
+            libxdamage1 libxfixes3 libxrandr2 libatspi2.0-0t64
+
+      - name: 의존성 설치
+        run: npm install --no-audit --no-fund
+
+      - name: Chrome 설치
+        run: npx puppeteer browsers install chrome
+
+      - name: 캡처
+        run: npm run thumbs
+
+      - name: 변경분 커밋
+        run: |
+          git add thumbs
+          if git diff --cached --quiet; then
+            echo "썸네일 변경 없음"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: 썸네일 자동 갱신"
+          git push || (git pull --rebase && git push)

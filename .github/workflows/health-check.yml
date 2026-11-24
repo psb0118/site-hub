@@ -14,7 +14,8 @@ on:
       - ".github/workflows/health-check.yml"
 
 permissions:
-  contents: read
+  contents: write # health.json 자동 커밋
+  issues: write # 실패 시 이슈 생성·종료
 
 concurrency:
   group: health-check
@@ -35,6 +36,7 @@ jobs:
           node-version: "20"
 
       - name: 점검 실행
+        id: health
         run: node scripts/check-health.js
 
       - name: 리포트 업로드
@@ -42,6 +44,77 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: health-report
-          path: health-report.md
+          path: |
+            health-report.md
+            health.json
           if-no-files-found: warn
           retention-days: 30
+
+      - name: health.json 커밋
+        if: always()
+        run: |
+          git add health.json
+          if git diff --cached --quiet; then
+            echo "health.json 변경 없음"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: 링크 점검 결과 갱신"
+          git push || (git pull --rebase && git push)
+
+      - name: 실패 시 이슈 생성 · 복구 시 자동 종료
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const failed = '${{ steps.health.outcome }}' === 'failure';
+            const label = 'site-health';
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+
+            try {
+              await github.rest.issues.getLabel({ owner, repo, name: label });
+            } catch {
+              await github.rest.issues.createLabel({
+                owner, repo, name: label, color: 'd93f0b',
+                description: '링크·썸네일 점검 실패',
+              });
+            }
+
+            const { data: open } = await github.rest.issues.listForRepo({
+              owner, repo, state: 'open', labels: label, per_page: 20,
+            });
+
+            if (failed) {
+              if (open.length) {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: open[0].number,
+                  body: `점검이 다시 실패했습니다.\n\n실행 로그: ${runUrl}`,
+                });
+              } else {
+                await github.rest.issues.create({
+                  owner, repo, labels: [label],
+                  title: '링크·썸네일 점검 실패',
+                  body: [
+                    '허브 점검 워크플로가 실패했습니다.',
+                    '',
+                    `- 실행: ${runUrl}`,
+                    '- 상세 내용은 실행 요약(Summary)과 `health-report` 아티팩트를 확인하세요.',
+                    '',
+                    '점검이 정상으로 돌아오면 이 이슈는 자동으로 닫힙니다.',
+                  ].join('\n'),
+                });
+              }
+            } else if (open.length) {
+              for (const issue of open) {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: issue.number,
+                  body: `점검이 정상으로 돌아와 자동으로 닫습니다.\n\n실행 로그: ${runUrl}`,
+                });
+                await github.rest.issues.update({
+                  owner, repo, issue_number: issue.number, state: 'closed',
+                });
+              }
+            }
