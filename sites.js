@@ -110,6 +110,16 @@ window.HUB = {
       accent: "#7dd3fc",
     },
     {
+      name: "머니 플레이그라운드",
+      desc: "1,000만원으로 시작해 주식·부동산·기업 경영까지 경험하는 머니 시뮬레이션입니다.",
+      url: "https://psb0118.github.io/stock-market/",
+      icon: "💰",
+      image: "thumbs/stock-market.png",
+      group: "게임",
+      tags: ["주식", "투자", "시뮬레이션", "머니"],
+      accent: "#f7c948",
+    },
+    {
       name: "GitHub — shooter",
       desc: "게임과 허브의 소스 코드, 커밋 기록을 확인합니다.",
       url: "https://github.com/psb0118/shooter",
