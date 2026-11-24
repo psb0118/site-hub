@@ -417,10 +417,14 @@
       return (s.group || "기타") === activeGroup;
     });
 
-    /* 북마크한 사이트를 맨 앞으로 (같은 그룹 안에서는 기존 순서 유지) */
+    /* 상단 고정(pin) → 북마크 → 나머지 (같은 순위 안에서는 기존 순서 유지) */
     const ordered = visible
       .slice()
-      .sort((a, b) => Number(isBookmarked(b.url)) - Number(isBookmarked(a.url)));
+      .sort(
+        (a, b) =>
+          Number(!a.pin) - Number(!b.pin) ||
+          Number(isBookmarked(b.url)) - Number(isBookmarked(a.url))
+      );
 
     gridEl.replaceChildren();
     for (const site of ordered) gridEl.append(buildCard(site));

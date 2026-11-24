@@ -12,6 +12,7 @@
    - group  : 카테고리 (같은 값끼리 필터 버튼이 자동 생성됨)
    - tags   : 검색에 걸리는 키워드 목록
    - accent : 카드 강조색 (16진수 색상)
+   - pin    : true 면 해당 탭에서 항상 맨 위에 표시 (북마크보다 우선)
 ========================================================= */
 
 window.HUB = {
@@ -28,6 +29,7 @@ window.HUB = {
       group: "게임",
       tags: ["3D", "FPS", "멀티플레이", "슈터"],
       accent: "#4a7cff",
+      pin: true,
     },
     {
       name: "Wordgame — 끝말잇기",
@@ -38,6 +40,28 @@ window.HUB = {
       group: "게임",
       tags: ["끝말잇기", "AI", "온라인", "단어"],
       accent: "#5fd18a",
+      pin: true,
+    },
+    {
+      name: "SILENCE — 침묵의 숲",
+      desc: "소리를 내면 쫓아오는 형상을 피해 숲에서 버티는 3D 공포 생존 게임입니다.",
+      url: "https://silence-g1fe.onrender.com/",
+      icon: "🌲",
+      group: "게임",
+      tags: ["침묵", "공포", "생존", "숲", "3D"],
+      accent: "#3fbf8f",
+      pin: true,
+    },
+    {
+      name: "머니 플레이그라운드",
+      desc: "1,000만원으로 시작해 주식·부동산·기업 경영까지 경험하는 머니 시뮬레이션입니다.",
+      url: "https://psb0118.github.io/stock-market/",
+      icon: "💰",
+      image: "thumbs/stock-market.png",
+      group: "게임",
+      tags: ["주식", "투자", "시뮬레이션", "머니"],
+      accent: "#f7c948",
+      pin: true,
     },
     {
       name: "Mushroom",
@@ -108,16 +132,6 @@ window.HUB = {
       group: "게임",
       tags: ["네온", "우주", "슈터", "Neon Shooter"],
       accent: "#7dd3fc",
-    },
-    {
-      name: "머니 플레이그라운드",
-      desc: "1,000만원으로 시작해 주식·부동산·기업 경영까지 경험하는 머니 시뮬레이션입니다.",
-      url: "https://psb0118.github.io/stock-market/",
-      icon: "💰",
-      image: "thumbs/stock-market.png",
-      group: "게임",
-      tags: ["주식", "투자", "시뮬레이션", "머니"],
-      accent: "#f7c948",
     },
     {
       name: "GitHub — shooter",

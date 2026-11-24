@@ -28,10 +28,12 @@ scripts/            썸네일 자동 캡처 스크립트 (선택)
   group: "기타",
   tags: ["키워드"],
   accent: "#5fd1ff",
+  pin: true, // 선택 — 넣으면 해당 탭에서 항상 맨 위(북마크보다 위)
 }
 ```
 
 카테고리 필터와 검색은 `group` / `tags` 값에서 자동으로 생성됩니다.
+`pin: true` 인 카드는 북마크로 고정한 카드보다도 위에 표시됩니다.
 
 ## 로컬에서 보기
 
@@ -141,18 +143,19 @@ GitHub Pages는 썸네일을 `cache-control: max-age=600`으로 캐시합니다.
 
 ## 현재 등록된 사이트
 
-| 이름 | 주소 |
-|---|---|
-| Shooter — 5v5 전술 슈터 | https://shooter-mfal.onrender.com/ |
-| Wordgame — 끝말잇기 | https://wordgame-kol6.onrender.com/ |
-| Mushroom | https://sites.google.com/changshin.ms.kr/mushroom |
-| 1v1 Cyber Duel | https://sites.google.com/changshin.ms.kr/1v1cyberduel-firebaseedition |
-| 113 | https://sites.google.com/changshin.ms.kr/113 |
-| 네온 에임 트레이너 | https://sites.google.com/changshin.ms.kr/yoo |
-| Pigeon Timing Flight Game | https://sites.google.com/changshin.ms.kr/pigeon-timing-flight-game |
-| 3D Crystal Quest | https://sites.google.com/changshin.ms.kr/changshin-is-goat |
-| Neon Space Shooter | https://sites.google.com/changshin.ms.kr/neon-space-shooter |
-| 머니 플레이그라운드 | https://psb0118.github.io/stock-market/ |
-| GitHub — shooter | https://github.com/psb0118/shooter |
+| 이름 | 주소 | 상단 고정 |
+|---|---|---|
+| Shooter — 5v5 전술 슈터 | https://shooter-mfal.onrender.com/ | ★ |
+| Wordgame — 끝말잇기 | https://wordgame-kol6.onrender.com/ | ★ |
+| SILENCE — 침묵의 숲 | https://silence-g1fe.onrender.com/ | ★ |
+| 머니 플레이그라운드 | https://psb0118.github.io/stock-market/ | ★ |
+| Mushroom | https://sites.google.com/changshin.ms.kr/mushroom | |
+| 1v1 Cyber Duel | https://sites.google.com/changshin.ms.kr/1v1cyberduel-firebaseedition | |
+| 113 | https://sites.google.com/changshin.ms.kr/113 | |
+| 네온 에임 트레이너 | https://sites.google.com/changshin.ms.kr/yoo | |
+| Pigeon Timing Flight Game | https://sites.google.com/changshin.ms.kr/pigeon-timing-flight-game | |
+| 3D Crystal Quest | https://sites.google.com/changshin.ms.kr/changshin-is-goat | |
+| Neon Space Shooter | https://sites.google.com/changshin.ms.kr/neon-space-shooter | |
+| GitHub — shooter | https://github.com/psb0118/shooter | |
 
-> Wordgame은 Render 무료 플랜이라 첫 접속 시 30초 정도 걸릴 수 있습니다.
+> Wordgame·Shooter·SILENCE 는 Render 무료 플랜이라 첫 접속 시 콜드 스타트로 시간이 걸릴 수 있습니다.
