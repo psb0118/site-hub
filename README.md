@@ -81,6 +81,7 @@ sudo apt-get install -y fontconfig fonts-nanum fonts-noto-color-emoji fonts-deja
 
 ```bash
 npm run thumbs
+THUMB_ONLY=silence npm run thumbs   # 이름·파일명에 silence 가 들어간 카드만 다시 캡처
 ```
 
 - 결과는 `sites.js`의 `image` 경로에 그대로 덮어씁니다. (예: `thumbs/shooter.png`)

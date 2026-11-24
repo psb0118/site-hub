@@ -12,6 +12,7 @@
      npx puppeteer browsers install chrome
      python3 -m http.server 4173      # 정적 서버를 켜둔 상태에서
      npm run thumbs                   # 이 스크립트
+     THUMB_ONLY=silence npm run thumbs   # 이름·파일명에 silence 가 들어간 카드만
 ========================================================= */
 
 const fs = require("fs");
@@ -23,6 +24,8 @@ const ROOT = path.join(__dirname, "..");
 const CLIENT_DIR = ROOT;
 const BASE_URL = process.env.THUMB_BASE_URL || "http://127.0.0.1:4173";
 const VIEWPORT = { width: 1280, height: 720, deviceScaleFactor: 1 };
+/* THUMB_ONLY=값 → 이름 또는 image 경로에 값이 들어간 사이트만 캡처 (대소문자 무시) */
+const ONLY = (process.env.THUMB_ONLY || "").trim().toLowerCase();
 const SETTLE_MS = 1200;
 
 function loadSites() {
@@ -113,11 +116,20 @@ async function dismissOverlays(page) {
 }
 
 async function main() {
-  const targets = loadSites().filter((s) => s && s.url && s.image);
+  const all = loadSites().filter((s) => s && s.url && s.image);
+  const targets = ONLY
+    ? all.filter((s) => `${s.name} ${s.image}`.toLowerCase().includes(ONLY))
+    : all;
   if (!targets.length) {
-    console.log("[THUMB] image 가 지정된 사이트가 없습니다. sites.js 를 확인하세요.");
+    const why = ONLY
+      ? `THUMB_ONLY="${process.env.THUMB_ONLY}" 와 일치하는 사이트가 없습니다.`
+      : "image 가 지정된 사이트가 없습니다. sites.js 를 확인하세요.";
+    console.log(
+      `[THUMB] ${why}` + (ONLY ? `\n[THUMB] 캡처 가능: ${all.map((s) => s.image).join(", ")}` : "")
+    );
     return;
   }
+  console.log(`[THUMB] 대상 ${targets.length}개${ONLY ? ` (THUMB_ONLY=${process.env.THUMB_ONLY})` : ""}`);
 
   const browser = await puppeteer.launch({
     headless: true,
@@ -132,7 +144,13 @@ async function main() {
 
       try {
         await page.setViewport(VIEWPORT);
-        await page.goto(url, { waitUntil: "networkidle2", timeout: 45000 });
+        try {
+          await page.goto(url, { waitUntil: "networkidle2", timeout: 45000 });
+        } catch (err) {
+          /* 폴링·소켓 등으로 네트워크가 멈추지 않는 사이트 — 화면은 이미 떠 있으므로 그대로 캡처 */
+          if (!/timeout/i.test(err.message)) throw err;
+          console.log("[THUMB]   네트워크 유휴 대기 초과 — 현재 화면으로 캡처");
+        }
         await new Promise((r) => setTimeout(r, SETTLE_MS));
 
         await dismissOverlays(page);
