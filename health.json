@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-24T23:33:59.730Z",
+  "checkedAt": "2026-11-24T23:40:02.925Z",
   "sites": {
     "https://shooter-mfal.onrender.com/": {
       "state": "ok",
@@ -77,6 +77,13 @@
       "label": "200",
       "thumb": "ok",
       "thumbDetail": "1280×720 · 21KB +640px"
+    },
+    "https://26024-cmyk.github.io/-/": {
+      "state": "ok",
+      "status": 200,
+      "label": "200",
+      "thumb": "ok",
+      "thumbDetail": "1280×720 · 37KB +640px"
     },
     "https://github.com/psb0118/shooter": {
       "state": "ok",

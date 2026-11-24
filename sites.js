@@ -135,6 +135,16 @@ window.HUB = {
       accent: "#7dd3fc",
     },
     {
+      name: "팔레오 클래시 — 고생물 배틀 도감",
+      desc: "45종 고생물을 발굴해 모으고, 합쳐서 강화하며 고생대·중생대·신생대 배틀을 치르는 도감 게임입니다.",
+      url: "https://26024-cmyk.github.io/-/",
+      icon: "🦖",
+      image: "thumbs/paleo-clash.webp",
+      group: "게임",
+      tags: ["공룡", "고생물", "도감", "배틀", "융합"],
+      accent: "#c98d4b",
+    },
+    {
       name: "GitHub — shooter",
       desc: "게임과 허브의 소스 코드, 커밋 기록을 확인합니다.",
       url: "https://github.com/psb0118/shooter",

@@ -161,7 +161,7 @@ GitHub Pages는 썸네일을 `cache-control: max-age=600`으로 캐시합니다.
 
 | 워크플로 | 언제 | 하는 일 |
 |---|---|---|
-| 링크·썸네일 점검 (`health-check.yml`) | `sites.js`/`thumbs/` 변경, main 푸시, 매일 06:00 KST, 수동 | 12개 링크 상태 확인 → `health.json` 커밋, 요약 리포트·아티팩트, **실패하면 `site-health` 라벨 이슈 자동 생성**, 복구되면 자동 종료 |
+| 링크·썸네일 점검 (`health-check.yml`) | `sites.js`/`thumbs/` 변경, main 푸시, 매일 06:00 KST, 수동 | 13개 링크 상태 확인 → `health.json` 커밋, 요약 리포트·아티팩트, **실패하면 `site-health` 라벨 이슈 자동 생성**, 복구되면 자동 종료 |
 | 썸네일 자동 갱신 (`thumbs-refresh.yml`) | 매주 화 03:00 KST, 수동 | Chrome 으로 전체 썸네일 재캡처 후 변경이 있으면 커밋·푸시 |
 
 - 링크 장애(5xx·타임아웃)는 경고로만 기록해 초록불을 유지하고, **썸네일 누락·손상 때만** 실패합니다.
@@ -196,6 +196,7 @@ GitHub Pages는 썸네일을 `cache-control: max-age=600`으로 캐시합니다.
 | Pigeon Timing Flight Game | https://sites.google.com/changshin.ms.kr/pigeon-timing-flight-game | |
 | 3D Crystal Quest | https://sites.google.com/changshin.ms.kr/changshin-is-goat | |
 | Neon Space Shooter | https://sites.google.com/changshin.ms.kr/neon-space-shooter | |
+| 팔레오 클래시 — 고생물 배틀 도감 | https://26024-cmyk.github.io/-/ | |
 | GitHub — shooter | https://github.com/psb0118/shooter | |
 
 > Wordgame·Shooter·SILENCE 는 Render 무료 플랜이라 첫 접속 시 콜드 스타트로 시간이 걸릴 수 있습니다.

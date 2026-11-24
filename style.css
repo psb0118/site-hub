@@ -520,6 +520,8 @@ input:focus-visible {
 .card-health {
   width: 9px; height: 9px; flex: none;
   margin-left: auto;
+  align-self: flex-start;
+  margin-top: 6px;
   border-radius: 50%;
   background: #4b5563;
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
