@@ -47,6 +47,7 @@ window.HUB = {
       desc: "소리를 내면 쫓아오는 형상을 피해 숲에서 버티는 3D 공포 생존 게임입니다.",
       url: "https://silence-g1fe.onrender.com/",
       icon: "🌲",
+      image: "thumbs/silence.png",
       group: "게임",
       tags: ["침묵", "공포", "생존", "숲", "3D"],
       accent: "#3fbf8f",
