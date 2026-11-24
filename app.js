@@ -339,6 +339,11 @@
 
     btn.addEventListener("click", () => {
       activeGroup = value;
+      /* 검색 중에 탭을 누르면 검색어를 지우고 해당 탭 전체를 보여준다 */
+      if (query) {
+        query = "";
+        searchEl.value = "";
+      }
       render();
       writeUrlState(true);
     });
