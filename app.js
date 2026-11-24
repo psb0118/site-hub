@@ -23,7 +23,9 @@
   document.title = cfg.title ? `${cfg.title} — 사이트 모음` : "사이트 허브";
 
   /* 기본 활성 탭 = sites.js 에 처음 등장하는 그룹 */
-  let activeGroup = sites.length ? sites[0].group || "기타" : "";
+  const BOOKMARK_GROUP = "__bookmarks__";
+  const DEFAULT_GROUP = sites.length ? sites[0].group || "기타" : "";
+  let activeGroup = DEFAULT_GROUP;
   let query = "";
 
   /* ---------- 북마크 (개인 설정 · localStorage) ---------- */
@@ -61,6 +63,7 @@
       : [url, ...bookmarks];
     saveBookmarks();
     if (auth && auth.isSignedIn()) auth.push(bookmarks);
+    buildGroups();
     render();
 
     const btn = [...gridEl.querySelectorAll(".card-star")].find((b) => b.dataset.url === url);
@@ -196,7 +199,11 @@
       img.decoding = "async";
 
       const show = () => thumb.classList.add("has-image");
-      const hide = () => { thumb.classList.remove("has-image"); img.remove(); };
+      const hide = () => {
+        thumb.classList.remove("has-image");
+        img.remove();
+        console.warn(`[HUB] 썸네일을 불러오지 못했습니다: ${site.image}`);
+      };
       img.addEventListener("load", show);
       img.addEventListener("error", hide);
       if (img.complete && img.naturalWidth > 0) show();
@@ -318,48 +325,91 @@
     return names;
   }
 
+  function makeChip(value, label, count) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "chip";
+    btn.dataset.group = value;
+    btn.textContent = label;
+
+    const num = document.createElement("span");
+    num.className = "chip-num";
+    num.textContent = String(count);
+    btn.append(num);
+
+    btn.addEventListener("click", () => {
+      activeGroup = value;
+      render();
+      writeUrlState(true);
+    });
+
+    return btn;
+  }
+
+  function markActiveChips() {
+    for (const chip of groupsEl.querySelectorAll(".chip")) {
+      const on = chip.dataset.group === activeGroup;
+      chip.classList.toggle("active", on);
+      chip.setAttribute("aria-pressed", String(on));
+    }
+  }
+
   function buildGroups() {
     groupsEl.replaceChildren();
+
+    /* 북마크한 사이트가 있을 때만 '북마크' 탭을 맨 앞에 노출 */
+    if (bookmarks.length) {
+      groupsEl.append(makeChip(BOOKMARK_GROUP, "북마크", bookmarks.length));
+    }
     for (const name of groupNames()) {
       const count = sites.filter((s) => (s.group || "기타") === name).length;
-
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "chip" + (name === activeGroup ? " active" : "");
-      btn.setAttribute("aria-pressed", String(name === activeGroup));
-      btn.dataset.group = name;
-      btn.textContent = name;
-
-      const num = document.createElement("span");
-      num.className = "chip-num";
-      num.textContent = String(count);
-      btn.append(num);
-
-      btn.addEventListener("click", () => {
-        activeGroup = name;
-        for (const chip of groupsEl.querySelectorAll(".chip")) {
-          const on = chip === btn;
-          chip.classList.toggle("active", on);
-          chip.setAttribute("aria-pressed", String(on));
-        }
-        render();
-      });
-
-      groupsEl.append(btn);
+      groupsEl.append(makeChip(name, name, count));
     }
+    markActiveChips();
   }
 
   /* ---------- 렌더 ---------- */
 
+  /* ---------- URL 상태 (?g=그룹&q=검색어) ---------- */
+
+  function readUrlState() {
+    const params = new URLSearchParams(location.search);
+    const g = params.get("g");
+    query = params.get("q") || "";
+    if (g && (g === BOOKMARK_GROUP || groupNames().includes(g))) activeGroup = g;
+    if (searchEl) searchEl.value = query;
+  }
+
+  function writeUrlState(push) {
+    const params = new URLSearchParams();
+    if (activeGroup && activeGroup !== DEFAULT_GROUP) params.set("g", activeGroup);
+    if (query.trim()) params.set("q", query.trim());
+
+    const qs = params.toString();
+    const url = location.pathname + (qs ? `?${qs}` : "") + location.hash;
+    const state = { g: activeGroup, q: query };
+
+    if (push) history.pushState(state, "", url);
+    else history.replaceState(state, "", url);
+  }
+
   function render() {
     const q = query.trim().toLowerCase();
 
+    /* 북마크 탭에 있는데 북마크가 모두 사라졌으면 기본 탭으로 복귀 */
+    if (activeGroup === BOOKMARK_GROUP && !bookmarks.length) {
+      activeGroup = DEFAULT_GROUP;
+      writeUrlState(false);
+    }
+
     const visible = sites.filter((s) => {
-      const groupOk = (s.group || "기타") === activeGroup;
-      if (!groupOk) return false;
-      if (!q) return true;
-      const hay = [s.name, s.desc, (s.tags || []).join(" "), s.url].join(" ").toLowerCase();
-      return hay.includes(q);
+      /* 검색어가 있으면 탭과 무관하게 전체 사이트에서 찾는다 */
+      if (q) {
+        const hay = [s.name, s.desc, (s.tags || []).join(" "), s.url].join(" ").toLowerCase();
+        return hay.includes(q);
+      }
+      if (activeGroup === BOOKMARK_GROUP) return isBookmarked(s.url);
+      return (s.group || "기타") === activeGroup;
     });
 
     /* 북마크한 사이트를 맨 앞으로 (같은 그룹 안에서는 기존 순서 유지) */
@@ -371,20 +421,38 @@
     for (const site of ordered) gridEl.append(buildCard(site));
 
     if (sites.length === 0) {
-      emptyEl.textContent = "아직 등록된 사이트가 없습니다. client/sites.js 에 사이트를 추가하세요.";
+      emptyEl.textContent = "아직 등록된 사이트가 없습니다. sites.js 에 사이트를 추가하세요.";
       emptyEl.classList.remove("hidden");
     } else {
-      emptyEl.textContent = "조건에 맞는 사이트가 없습니다.";
+      emptyEl.textContent = q
+        ? `“${query.trim()}”에 맞는 사이트가 없습니다.`
+        : activeGroup === BOOKMARK_GROUP
+          ? "북마크한 사이트가 없습니다."
+          : "조건에 맞는 사이트가 없습니다.";
       emptyEl.classList.toggle("hidden", visible.length > 0);
     }
 
-    countEl.textContent = `${visible.length}개 표시 / 전체 ${sites.length}개`;
+    countEl.textContent = q
+      ? `${visible.length}개 표시 / 전체 ${sites.length}개 (전체 검색)`
+      : `${visible.length}개 표시 / 전체 ${sites.length}개`;
+
+    markActiveChips();
   }
 
   /* ---------- 이벤트 ---------- */
 
   searchEl.addEventListener("input", () => {
     query = searchEl.value;
+    render();
+    writeUrlState(false);
+  });
+
+  window.addEventListener("popstate", () => {
+    const params = new URLSearchParams(location.search);
+    const g = params.get("g");
+    query = params.get("q") || "";
+    activeGroup = g && (g === BOOKMARK_GROUP || groupNames().includes(g)) ? g : DEFAULT_GROUP;
+    searchEl.value = query;
     render();
   });
 
@@ -393,6 +461,7 @@
       searchEl.value = "";
       query = "";
       render();
+      writeUrlState(false);
       searchEl.blur();
     }
   });
@@ -404,6 +473,7 @@
     }
   });
 
+  readUrlState();
   renderAccount();
   buildGroups();
   render();

@@ -145,6 +145,14 @@ GitHub Pages는 썸네일을 `cache-control: max-age=600`으로 캐시합니다.
 |---|---|
 | Shooter — 5v5 전술 슈터 | https://shooter-mfal.onrender.com/ |
 | Wordgame — 끝말잇기 | https://wordgame-kol6.onrender.com/ |
+| Mushroom | https://sites.google.com/changshin.ms.kr/mushroom |
+| 1v1 Cyber Duel | https://sites.google.com/changshin.ms.kr/1v1cyberduel-firebaseedition |
+| 113 | https://sites.google.com/changshin.ms.kr/113 |
+| 네온 에임 트레이너 | https://sites.google.com/changshin.ms.kr/yoo |
+| Pigeon Timing Flight Game | https://sites.google.com/changshin.ms.kr/pigeon-timing-flight-game |
+| 3D Crystal Quest | https://sites.google.com/changshin.ms.kr/changshin-is-goat |
+| Neon Space Shooter | https://sites.google.com/changshin.ms.kr/neon-space-shooter |
+| 머니 플레이그라운드 | https://psb0118.github.io/stock-market/ |
 | GitHub — shooter | https://github.com/psb0118/shooter |
 
 > Wordgame은 Render 무료 플랜이라 첫 접속 시 30초 정도 걸릴 수 있습니다.
