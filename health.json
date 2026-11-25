@@ -1,10 +1,10 @@
 {
-  "checkedAt": "2026-11-24T23:41:00.942Z",
+  "checkedAt": "2026-11-25T04:04:28.936Z",
   "sites": {
     "https://shooter-mfal.onrender.com/": {
-      "state": "ok",
-      "status": 200,
-      "label": "200",
+      "state": "bad",
+      "status": 503,
+      "label": "503",
       "thumb": "ok",
       "thumbDetail": "1280×720 · 42KB +640px"
     },
@@ -16,9 +16,9 @@
       "thumbDetail": "1280×720 · 40KB +640px"
     },
     "https://silence-g1fe.onrender.com/": {
-      "state": "ok",
-      "status": 200,
-      "label": "200",
+      "state": "bad",
+      "status": 503,
+      "label": "503",
       "thumb": "ok",
       "thumbDetail": "1280×720 · 46KB +640px"
     },
